@@ -40,8 +40,7 @@ class EmotionDataset(Dataset):
 
 
     def _get_audio_sample_path(self, idx):
-        fold = f"fold{self.annotations.iloc[idx, 5]}"
-        path = os.path.join(self.audio_dir, fold, self.annotations.iloc[idx, 0])
+        path = self.annotations.iloc[idx, 0]
         return path
 
     def _get_audio_sample_label(self, idx):
