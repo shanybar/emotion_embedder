@@ -49,7 +49,10 @@ class EmotionDataset(Dataset):
     def __getitem__(self, index):
         siganl_1_path, siganl_2_path, target = self._create_pair(index)
         signal_1, sr_1 = torchaudio.load(siganl_1_path)
+        # y, sr = librosa.load(siganl_1_path)
         signal_2, sr_2 = torchaudio.load(siganl_2_path)
+
+        plot_waveform(signal_1, sr_1)
 
         signal_1 = self._resample_if_necessary(signal_1, sr_1)
         signal_2 = self._resample_if_necessary(signal_2, sr_2)
@@ -196,13 +199,27 @@ def plot_spectrogram(specgram, title=None, ylabel="freq_bin", ax=None):
     ax.set_ylabel(ylabel)
     ax.imshow(librosa.power_to_db(specgram), origin="lower", aspect="auto", interpolation="nearest")
 
+
+def plot_waveform(waveform, sr, title="Waveform", ax=None):
+    waveform = waveform.numpy()
+
+    num_channels, num_frames = waveform.shape
+    time_axis = torch.arange(0, num_frames) / sr
+
+    if ax is None:
+        _, ax = plt.subplots(num_channels, 1)
+    ax.plot(time_axis, waveform[0], linewidth=1)
+    ax.grid(True)
+    ax.set_xlim([0, time_axis[-1]])
+    ax.set_title(title)
+
 if __name__ == "__main__":
     ANNOTATIONS_FILE = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
 
     dataset = EmotionDataset(ANNOTATIONS_FILE, target_sample_rate=16000, max_len=64000)
     print(f"There are {len(dataset)} samples in the dataset.")
-    signal_1, signal_2, label = dataset[0]
+    signal_1, signal_2, label = dataset[10]
 
-    plot_spectrogram(signal_2)
+    plot_spectrogram(signal_1)
     print(f"Label: {label}")
 
