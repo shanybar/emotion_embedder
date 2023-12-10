@@ -45,7 +45,7 @@ def test(model, device, test_loader):
         for (images_1, images_2, targets) in test_loader:
             images_1, images_2, targets = images_1.to(device), images_2.to(device), targets.to(device)
             outputs = model(images_1, images_2).squeeze()
-            test_loss += criterion(outputs, targets).sum().item()  # sum up batch loss
+            test_loss += criterion(outputs, targets.view_as(outputs)).sum().item()  # sum up batch loss
             pred = torch.where(outputs > 0.5, 1, 0)  # get the index of the max log-probability
             correct += pred.eq(targets.view_as(pred)).sum().item()
 
@@ -105,8 +105,8 @@ def train_model():
     train_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
     val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\validation_annotations.csv"
 
-    train_dataset = EmotionDataset(train_csv_path, target_sample_rate=16000, max_len=64000)
-    val_dataset = EmotionDataset(val_csv_path, target_sample_rate=16000, max_len=64000)
+    train_dataset = EmotionDataset(train_csv_path, target_sample_rate=48000, max_len=48000*3)
+    val_dataset = EmotionDataset(val_csv_path, target_sample_rate=48000, max_len=48000*3)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=4, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=4, shuffle=False)
 

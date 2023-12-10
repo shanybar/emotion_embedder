@@ -1,9 +1,11 @@
 import os
 import torch
 import random
+import librosa
 import torchaudio
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from torch.utils.data import Dataset
 
 
@@ -46,10 +48,14 @@ class EmotionDataset(Dataset):
 
     def __getitem__(self, index):
         siganl_1_path, siganl_2_path, target = self._create_pair(index)
-        signal_1, sr = torchaudio.load(siganl_1_path)
-        signal_2, sr = torchaudio.load(siganl_2_path)
-        signal_1 = self._resample_if_necessary(signal_1, sr)
-        signal_2 = self._resample_if_necessary(signal_2, sr)
+        signal_1, sr_1 = torchaudio.load(siganl_1_path)
+        signal_2, sr_2 = torchaudio.load(siganl_2_path)
+
+        signal_1 = self._resample_if_necessary(signal_1, sr_1)
+        signal_2 = self._resample_if_necessary(signal_2, sr_2)
+
+        signal_1 = self._mix_down_if_necessary(signal_1)
+        signal_2 = self._mix_down_if_necessary(signal_2)
 
         signal_1 = self._cut_if_necessary(signal_1)
         signal_2 = self._cut_if_necessary(signal_2)
@@ -67,7 +73,7 @@ class EmotionDataset(Dataset):
         return path
 
     def _get_audio_sample_label(self, idx):
-        return self.annotations.iloc[idx, 6]
+        return self.annotations.iloc[idx, 1]
 
     def _resample_if_necessary(self, signal, sr):
         if sr != self.target_sample_rate:
@@ -121,31 +127,33 @@ class EmotionDataset(Dataset):
            from different classes.
         """
 
-        # pick some random class for the first image
-        selected_class = random.randint(1, 8)
-
-        # pick a random index for the first image in the grouped indices based of the label
-        # of the class
-        random_index_1 = random.randint(1, self.grouped_examples[selected_class].shape[0] - 1)
+        # # pick some random class for the first
+        # selected_class = random.randint(1, 8)
+        #
+        # # pick a random index for the first image in the grouped indices based of the label
+        # # of the class
+        # random_index_1 = random.randint(1, self.grouped_examples[selected_class].shape[0] - 1)
 
         # pick the index to get the first image
-        index_1 = self.grouped_examples[selected_class][random_index_1]
+        # index_1 = self.grouped_examples[selected_class][random_index_1]
 
-        # get the first image
-        # image_1 = self.data[index_1].clone().float()
-        siganl_1_path = self._get_audio_sample_path(index_1)
+
+        siganl_1_path = self._get_audio_sample_path(index)
+        selected_class = self._get_audio_sample_label(index)
 
         # same class
         if index % 2 == 0:
             # pick a random index for the second image
             random_index_2 = random.randint(1, self.grouped_examples[selected_class].shape[0] - 1)
+            index_2 = self.grouped_examples[selected_class][random_index_2]
 
             # ensure that the index of the second image isn't the same as the first image
-            while random_index_2 == random_index_1:
+            while index_2 == index:
                 random_index_2 = random.randint(1, self.grouped_examples[selected_class].shape[0] - 1)
+                index_2 = self.grouped_examples[selected_class][random_index_2]
 
             # pick the index to get the second image
-            index_2 = self.grouped_examples[selected_class][random_index_2]
+            # index_2 = self.grouped_examples[selected_class][random_index_2]
 
             # get the second image
             # image_2 = self.data[index_2].clone().float()
@@ -180,11 +188,21 @@ class EmotionDataset(Dataset):
         return siganl_1_path, siganl_2_path, target
 
 
+def plot_spectrogram(specgram, title=None, ylabel="freq_bin", ax=None):
+    if ax is None:
+        _, ax = plt.subplots(1, 1)
+    if title is not None:
+        ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    ax.imshow(librosa.power_to_db(specgram), origin="lower", aspect="auto", interpolation="nearest")
+
 if __name__ == "__main__":
     ANNOTATIONS_FILE = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
 
     dataset = EmotionDataset(ANNOTATIONS_FILE, target_sample_rate=16000, max_len=64000)
     print(f"There are {len(dataset)} samples in the dataset.")
     signal_1, signal_2, label = dataset[0]
+
+    plot_spectrogram(signal_2)
     print(f"Label: {label}")
 
