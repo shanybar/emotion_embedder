@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+
 def create_annotation_csv(rootdir):
     filenames = []
     labels = []

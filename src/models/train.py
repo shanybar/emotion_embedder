@@ -6,10 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import torchvision
 from torch.utils.data import Dataset
-from torchvision import datasets
-from torchvision import transforms as T
 from torch.optim.lr_scheduler import StepLR
 
 
