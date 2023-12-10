@@ -126,7 +126,7 @@ class EmotionDataset(Dataset):
 
         # pick a random index for the first image in the grouped indices based of the label
         # of the class
-        random_index_1 = random.randint(0, self.grouped_examples[selected_class].shape[0] - 1)
+        random_index_1 = random.randint(1, self.grouped_examples[selected_class].shape[0] - 1)
 
         # pick the index to get the first image
         index_1 = self.grouped_examples[selected_class][random_index_1]
@@ -138,11 +138,11 @@ class EmotionDataset(Dataset):
         # same class
         if index % 2 == 0:
             # pick a random index for the second image
-            random_index_2 = random.randint(0, self.grouped_examples[selected_class].shape[0] - 1)
+            random_index_2 = random.randint(1, self.grouped_examples[selected_class].shape[0] - 1)
 
             # ensure that the index of the second image isn't the same as the first image
             while random_index_2 == random_index_1:
-                random_index_2 = random.randint(0, self.grouped_examples[selected_class].shape[0] - 1)
+                random_index_2 = random.randint(1, self.grouped_examples[selected_class].shape[0] - 1)
 
             # pick the index to get the second image
             index_2 = self.grouped_examples[selected_class][random_index_2]
@@ -157,15 +157,15 @@ class EmotionDataset(Dataset):
         # different class
         else:
             # pick a random class
-            other_selected_class = random.randint(0, 9)
+            other_selected_class = random.randint(1, 8)
 
             # ensure that the class of the second image isn't the same as the first image
             while other_selected_class == selected_class:
-                other_selected_class = random.randint(0, 9)
+                other_selected_class = random.randint(1, 8)
 
             # pick a random index for the second image in the grouped indices based of the label
             # of the class
-            random_index_2 = random.randint(0, self.grouped_examples[other_selected_class].shape[0] - 1)
+            random_index_2 = random.randint(1, self.grouped_examples[other_selected_class].shape[0] - 1)
 
             # pick the index to get the second image
             index_2 = self.grouped_examples[other_selected_class][random_index_2]

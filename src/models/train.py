@@ -103,7 +103,7 @@ def train_model():
     #     test_kwargs.update(cuda_kwargs)
 
     train_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
-    val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\val_annotations.csv"
+    val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\validation_annotations.csv"
 
     train_dataset = EmotionDataset(train_csv_path, target_sample_rate=16000, max_len=64000)
     val_dataset = EmotionDataset(val_csv_path, target_sample_rate=16000, max_len=64000)
