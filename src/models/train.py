@@ -15,7 +15,7 @@ def train(log_interval, model, device, train_loader, optimizer, epoch):
     model.train()
 
     # criterion = nn.BCELoss()
-    criterion = nn.CosineEmbeddingLoss(margin=0.5)
+    criterion = nn.CosineEmbeddingLoss(margin=0.7)
 
     for batch_idx, (images_1, images_2, targets) in enumerate(train_loader):
         images_1, images_2, targets = images_1.to(device), images_2.to(device), targets.to(device)
@@ -37,7 +37,7 @@ def test(model, device, test_loader):
     correct = 0
 
     # criterion = nn.BCELoss()
-    criterion = nn.CosineEmbeddingLoss(margin=0.5)
+    criterion = nn.CosineEmbeddingLoss(margin=0.7)
 
     with torch.no_grad():
         for (images_1, images_2, targets) in test_loader:
@@ -48,7 +48,7 @@ def test(model, device, test_loader):
             test_loss += loss
             # test_loss += criterion(outputs, targets.view_as(outputs)).sum().item()  # sum up batch loss
             cos = F.cosine_similarity(output_1, output_2)
-            pred = torch.where(cos > 0.6, 1, -1)  # get the index of the max log-probability
+            pred = torch.where(cos > 0.9, 1, -1)  # get the index of the max log-probability
             correct += pred.eq(targets.view_as(pred)).sum().item()
 
     # test_loss /= len(test_loader.dataset)
@@ -69,8 +69,8 @@ def train_model():
     train_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
     val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\validation_annotations.csv"
 
-    train_dataset = EmotionDataset(train_csv_path, target_sample_rate=48000, max_len=48000*4)
-    val_dataset = EmotionDataset(val_csv_path, target_sample_rate=48000, max_len=48000*4)
+    train_dataset = EmotionDataset(train_csv_path, target_sample_rate=16000, max_len=64000)
+    val_dataset = EmotionDataset(val_csv_path, target_sample_rate=16000, max_len=64000)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=8, shuffle=True)
 
@@ -80,7 +80,7 @@ def train_model():
     optimizer = optim.Adam(model.parameters(), lr=0.0005)
 
     # scheduler = StepLR(optimizer, step_size=1)
-    for epoch in range(1, 50):
+    for epoch in range(1, 100):
         train(10, model, device, train_loader, optimizer, epoch)
         val_loss = test(model, device, val_loader)
         # scheduler.step()

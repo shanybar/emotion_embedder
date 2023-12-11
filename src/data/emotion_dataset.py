@@ -110,7 +110,6 @@ class EmotionDataset(Dataset):
                 random_index_2 = random.randint(1, self.grouped_examples[selected_class].shape[0] - 1)
                 index_2 = self.grouped_examples[selected_class][random_index_2]
 
-            # get the second image
             siganl_2_path = self._get_audio_sample_path(index_2)
 
             # set the label for this example to be positive (1)

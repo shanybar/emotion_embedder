@@ -55,7 +55,7 @@ def main():
     tsne = TSNE(n_components=2, random_state=0)
     np.set_printoptions(suppress=True)
     Y = tsne.fit_transform(vecs)
-    label_mapping = {1: 'neutral', 2: 'calm'}
+    label_mapping = {1: 'neutral', 2: 'calm', 3: 'happy', }
     fig = matplotlib.pyplot.figure(figsize=(25, 25))
 
     colors = np.array(['#377eb8', '#ff7f00', '#4daf4a',

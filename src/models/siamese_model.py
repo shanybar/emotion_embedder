@@ -19,18 +19,23 @@ class SiameseModel(nn.Module):
         # whereas MNIST has (1,x,x) where 1 is a gray-scale channel
         self.resnet.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         self.fc_in_features = self.resnet.fc.in_features
+        # self.fc_in_features = 640
 
         # remove the last layer of resnet18 (linear layer which is before avgpool layer)
         self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
 
-        # add linear layers to comp
+        self.cnn1 = nn.Sequential(
+            nn.Conv2d(1, 64, kernel_size=(7, 7),  stride=(2, 2), padding=(3, 3)),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(3, stride=2),
 
-        # self.fc = nn.Sequential(
-        #     nn.Linear(self.fc_in_features * 2, 256),
-        #     nn.ReLU(inplace=True),
-        #     nn.Linear(256, 1),
-        # )
+            nn.Conv2d(64, 256, kernel_size=(5, 5), stride=(2, 2)),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(2, stride=2),
 
+            nn.Conv2d(256, 128, kernel_size=3, stride=1),
+            nn.ReLU(inplace=True)
+        )
         self.fc = nn.Sequential(
             nn.Linear(self.fc_in_features, 256),
             nn.ReLU(inplace=True),
@@ -38,8 +43,6 @@ class SiameseModel(nn.Module):
             nn.ReLU(inplace=True),
             nn.Linear(128, 64),
         )
-
-        self.sigmoid = nn.Sigmoid() #???
 
         # initialize the weights
         # self.resnet.apply(self.init_weights)
@@ -52,6 +55,7 @@ class SiameseModel(nn.Module):
 
     def forward_once(self, x):
         output = self.resnet(x)
+        # output = self.cnn1(x)
         output = output.view(output.size()[0], -1)
         output = self.fc(output)
         return output
