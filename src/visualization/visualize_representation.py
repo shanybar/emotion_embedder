@@ -1,7 +1,7 @@
 import matplotlib
 
 matplotlib.use('Agg')
-
+import torch
 import random
 import gzip
 import codecs
@@ -9,9 +9,11 @@ import logging
 import numpy as np
 import _pickle as cPickle
 import matplotlib.pyplot as plt
-
-import argparse
 from sklearn.manifold import TSNE
+from src.data.emotion_dataset import EmotionDataset
+from src.models.siamese_model import SiameseModel
+import argparse
+
 from itertools import cycle, islice
 
 random.seed(1)
@@ -20,17 +22,6 @@ np.random.seed(1)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-parser = argparse.ArgumentParser(description='Training a regressor')
-
-parser.add_argument('--embeddings_file', type=str,
-                    help=' The path configuration json file')
-parser.add_argument('--pdf_out_file', type=str,
-                    help=' The directory to the output folder')
-parser.add_argument('--type', type=str,
-                    help=' The directory to the output folder')
-
-args = parser.parse_args()
-
 
 def main():
     '''
@@ -38,18 +29,33 @@ def main():
     and dependent mentions vector), projects the representations and plots each mention in
     a scatter plot (each representation component in a separate plot).
     '''
-    embeddings_file = args.embeddings_file
-    out_file = args.pdf_out_file
 
-    logger.info('Reading the embeddings from {}...'.format(embeddings_file))
-    vocabulary, vocab_cluster_id, wv, gold_to_id = load_representations(args.type)
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
 
-    logger.info('Computing TSNE...')
+    model = SiameseModel().to(device)
+    model.load_state_dict(torch.load("C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\src\\models\\siamese_network.pt"))
+    model.eval()
+
+    val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\validation_annotations.csv"
+    val_dataset = EmotionDataset(val_csv_path, target_sample_rate=16000, max_len=64000)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False)
+
+    vecs = []
+    with torch.no_grad():
+        for (image_1, _, _) in val_loader:
+            image_1 = image_1.to(device)
+            output = model.forward_once(image_1)
+            vecs.append(output)
+
+    vecs = np.array(vecs)
+    logger.info('Computing TSNE')
     tsne = TSNE(n_components=2, random_state=0)
     np.set_printoptions(suppress=True)
-    Y = tsne.fit_transform(wv)
-
-    logger.info('Saving the output file to {}...'.format(out_file))
+    Y = tsne.fit_transform(vecs)
+    label_mapping = {1: 'neutral', 2: 'calm'}
     fig = matplotlib.pyplot.figure(figsize=(25, 25))
 
     colors = np.array(['#377eb8', '#ff7f00', '#4daf4a',
@@ -66,64 +72,6 @@ def main():
     fig.savefig(out_file + '.pdf', format='pdf', dpi=2000, bbox_inches='tight')
 
     logger.info('Done!')
-
-
-def load_representations(type):
-    '''
-    This script loads mentions representation component of a specific type
-    (full representation/context vector/dependent mentions vector)
-    :param type: a string represents the representation component type
-    :return: vocab - list of mentions (span and gold cluster id),
-            vocab_cluster_id - list of all cluster ids,
-            numpy array contains all the vectors,
-            and gold_to_id -  mapping of the string represents the gold coref chain
-            to a number
-
-    '''
-    with open(args.embeddings_file, 'rb') as f:
-        mention_to_rep_dict = cPickle.load(f)
-
-    vocab = []
-    vocab_cluster_id = []
-    wv = []
-    cluster_count = 1
-    gold_to_id = {}
-    gold_clusters = {}
-    print(len(mention_to_rep_dict))
-    for mention_tuple, rep in mention_to_rep_dict.items():  # first organize in gold clusters
-        if mention_tuple[1] not in gold_to_id:
-            gold_to_id[mention_tuple[1]] = cluster_count
-            cluster_count += 1
-        gold_cluster_id = gold_to_id[mention_tuple[1]]
-        if gold_cluster_id not in gold_clusters:
-            gold_clusters[gold_cluster_id] = []
-        gold_clusters[gold_cluster_id].append((mention_tuple, rep))
-
-    gold_clusters_list = [cluster for cluster_id, cluster in gold_clusters.items() if len(cluster) > 5]
-
-    selected_gold_clusters = gold_clusters_list[:10]
-
-    # remove some clusters since they make the visualization looks too loaded
-    selected_gold_clusters.pop(1)
-    selected_gold_clusters.pop(4)
-    selected_gold_clusters.pop(1)
-
-    cluster_id = 0
-    for cluster in selected_gold_clusters:
-        for mention in cluster:
-            mention_tuple = mention[0]
-            rep = mention[1]
-            vocab.append(mention_tuple[0])
-
-            vocab_cluster_id.append(cluster_id)
-            if type == 'full':
-                wv.append(rep[0])
-            elif type == 'args':
-                wv.append(rep[1])
-            elif type == 'context':
-                wv.append(np.array(rep[2]))
-        cluster_id += 1
-    return vocab, vocab_cluster_id, np.array(wv),gold_to_id
 
 
 if __name__ == '__main__':
