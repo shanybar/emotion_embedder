@@ -19,7 +19,7 @@ else:
 
 # init model
 model = SiameseModel().to(device)
-model.load_state_dict(torch.load("C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\src\\models\\siamese_network_acc77_loss177.pt"))
+model.load_state_dict(torch.load("C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\src\\models\\siamese_network_loss08.pt"))
 model.eval()
 
 # load dataset

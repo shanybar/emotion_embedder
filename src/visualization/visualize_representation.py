@@ -1,20 +1,13 @@
-import matplotlib
-
-matplotlib.use('Agg')
 import torch
 import random
-import gzip
-import codecs
 import logging
+import matplotlib
 import numpy as np
-import _pickle as cPickle
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from src.data.emotion_dataset import EmotionDataset
 from src.models.siamese_model import SiameseModel
-import argparse
-
-from itertools import cycle, islice
 
 random.seed(1)
 np.random.seed(1)
@@ -24,23 +17,17 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    '''
-    This script loads mentions representation components (full representation, context vector,
-    and dependent mentions vector), projects the representations and plots each mention in
-    a scatter plot (each representation component in a separate plot).
-    '''
-
     if torch.cuda.is_available():
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
 
     model = SiameseModel().to(device)
-    model.load_state_dict(torch.load("C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\src\\models\\siamese_network.pt"))
+    model.load_state_dict(torch.load("C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\src\\models\\siamese_network_loss08.pt"))
     model.eval()
 
-    val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\val_annotations.csv"
-    val_dataset = EmotionDataset(val_csv_path, target_sample_rate=22000, max_len=22000*3)
+    val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
+    val_dataset = EmotionDataset(val_csv_path, target_sample_rate=22000, max_len=22000*4)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False)
 
     labels = val_dataset.targets
@@ -70,7 +57,7 @@ def main():
     for label, x, y in zip(labels, Y[:, 0], Y[:, 1]):
         ax.annotate(label, xy=(x, y), xytext=(0, 0), textcoords='offset points', fontsize=25)
 
-    fig.savefig('tsne_vis_val.pdf', format='pdf', dpi=2000, bbox_inches='tight')
+    fig.savefig('train_vis_val.pdf', format='pdf', dpi=2000, bbox_inches='tight')
 
     logger.info('Done!')
 

@@ -58,6 +58,7 @@ class EmotionDataset(Dataset):
         positive = self.mel_spectrogram(positive)
         negative = self.mel_spectrogram(negative)
 
+        # Used power_to_db to increase the signal
         anchor = torch.tensor(librosa.power_to_db(anchor))
         positive = torch.tensor(librosa.power_to_db(positive))
         negative = torch.tensor(librosa.power_to_db(negative))
@@ -171,13 +172,13 @@ def plot_waveform(waveform, sr, title="Waveform", ax=None):
     ax.set_xlim([0, time_axis[-1]])
     ax.set_title(title)
 
-if __name__ == "__main__":
-    ANNOTATIONS_FILE = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
-
-    dataset = EmotionDataset(ANNOTATIONS_FILE, target_sample_rate=22000, max_len=22000*4)
-    print(f"There are {len(dataset)} samples in the dataset.")
-    signal_1, signal_2, signal_3 = dataset[80]
-
-    plot_spectrogram(torch.squeeze(signal_1))
+# if __name__ == "__main__":
+#     ANNOTATIONS_FILE = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
+#
+#     dataset = EmotionDataset(ANNOTATIONS_FILE, target_sample_rate=22000, max_len=22000*4)
+#     print(f"There are {len(dataset)} samples in the dataset.")
+#     signal_1, signal_2, signal_3 = dataset[80]
+#
+#     plot_spectrogram(torch.squeeze(signal_1))
 
 

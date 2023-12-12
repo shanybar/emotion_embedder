@@ -73,10 +73,10 @@ def train_model():
     model = SiameseModel().to(device)
     best_model = model
     best_loss = math.inf
-    optimizer = optim.Adadelta(model.parameters(), lr=0.1)
+    optimizer = optim.Adadelta(model.parameters(), lr=0.5)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=0.9)
-    for epoch in range(1, 15):
+    for epoch in range(1, 25):
         train(1, model, device, train_loader, optimizer, epoch)
         val_loss = test(model, device, val_loader)
         scheduler.step()
