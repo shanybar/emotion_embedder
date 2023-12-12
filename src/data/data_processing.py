@@ -17,15 +17,12 @@ def run_eda(data_df):
     sns.countplot(x='label', data=data_df)
     plt.title('Distribution of Labels')
     plt.show()
-    plt.savefig('labels_dist.png')
 
     # Visualize the length of the texts
-    data_df['length'] = data_df['clean_full_text'].apply(len)
     plt.figure(figsize=(8, 6))
-    sns.histplot(data=data_df, x='audio_length', hue='label', kde=True)
+    sns.histplot(data=data_df, x='duration', hue='label', kde=True)
     plt.title('Distribution of audio length by labels')
     plt.show()
-    plt.savefig('audio_length_by_labels_dist.png')
 
 
 def create_annotation_csv(rootdir):

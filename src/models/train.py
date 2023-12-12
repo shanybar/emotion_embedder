@@ -16,7 +16,7 @@ def train(log_interval, model, device, train_loader, optimizer, epoch):
     model.train()
 
     # criterion = nn.BCELoss()
-    criterion = nn.CosineEmbeddingLoss(margin=0.0)
+    # criterion = nn.CosineEmbeddingLoss(margin=0.0)
     criterion = nn.TripletMarginLoss()
 
     for batch_idx, (images_1, images_2, images_3) in enumerate(train_loader):
@@ -55,15 +55,22 @@ def test(model, device, test_loader):
             loss = criterion(output_1, output_2, output_3)
             test_loss += loss
             # test_loss += criterion(outputs, targets.view_as(outputs)).sum().item()  # sum up batch loss
-            # cos = F.l1(output_1, output_2)
-            # pred = torch.where(cos > 0.7, 1, -1)  # get the index of the max log-probability
-            # correct += pred.eq(targets.view_as(pred)).sum().item()
+            dist_pos = F.cosine_similarity(output_1, output_2)
+            dist_neg = F.cosine_similarity(output_1, output_3)
+            pred_pos = torch.where(dist_pos > 0.98, 1, 0)
+            targets_pos = torch.ones_like(pred_pos)
+            pred_neg = torch.where(dist_neg > 0.98, 1, 0)
+            targets_neg = torch.zeros_like(pred_neg)
+            pos_correct = pred_pos.eq(targets_pos.view_as(pred_pos)).sum().item()
+            neg_correct = pred_neg.eq(targets_neg.view_as(pred_neg)).sum().item()
+            correct += pos_correct
+            correct += neg_correct
 
     # test_loss /= len(test_loader.dataset)
 
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+        test_loss, correct, 2* len(test_loader.dataset),
+        100. * correct / (len(test_loader.dataset)*2)))
 
     return test_loss
 
@@ -91,7 +98,7 @@ def train_model():
     optimizer = optim.Adadelta(model.parameters(), lr=0.1)
 
     scheduler = StepLR(optimizer, step_size=1, gamma=0.9)
-    for epoch in range(1, 20):
+    for epoch in range(1, 15):
         train(1, model, device, train_loader, optimizer, epoch)
         val_loss = test(model, device, val_loader)
         scheduler.step()

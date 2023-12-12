@@ -39,7 +39,7 @@ def main():
     model.load_state_dict(torch.load("C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\src\\models\\siamese_network.pt"))
     model.eval()
 
-    val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
+    val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\val_annotations.csv"
     val_dataset = EmotionDataset(val_csv_path, target_sample_rate=22000, max_len=22000*3)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=1, shuffle=False)
 
@@ -70,7 +70,7 @@ def main():
     for label, x, y in zip(labels, Y[:, 0], Y[:, 1]):
         ax.annotate(label, xy=(x, y), xytext=(0, 0), textcoords='offset points', fontsize=25)
 
-    fig.savefig('tsne_vis.pdf', format='pdf', dpi=2000, bbox_inches='tight')
+    fig.savefig('tsne_vis_val.pdf', format='pdf', dpi=2000, bbox_inches='tight')
 
     logger.info('Done!')
 
