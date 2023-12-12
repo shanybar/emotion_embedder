@@ -5,43 +5,22 @@ import torch.nn as nn
 
 
 class SiameseModel(nn.Module):
-    """
-
-    """
-
     def __init__(self):
         super(SiameseModel, self).__init__()
 
         self.resnet = torchvision.models.resnet18(weights=ResNet18_Weights.DEFAULT)
 
-        # over-write the first conv layer to be able to read MNIST images
-        # as resnet18 reads (3,x,x) where 3 is RGB channels
-        # whereas MNIST has (1,x,x) where 1 is a gray-scale channel
+        # adjust to 1 channel input (not 2 channels like RGB)
         self.resnet.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         self.fc_in_features = self.resnet.fc.in_features
-        # self.fc_in_features = 640
 
-        # remove the last layer of resnet18 (linear layer which is before avgpool layer)
+        # remove the last layer of resnet18
         self.resnet = torch.nn.Sequential(*(list(self.resnet.children())[:-1]))
 
-        self.cnn1 = nn.Sequential(
-            nn.Conv2d(1, 64, kernel_size=(7, 7),  stride=(2, 2), padding=(3, 3)),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(3, stride=2),
-
-            nn.Conv2d(64, 256, kernel_size=(5, 5), stride=(2, 2)),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(2, stride=2),
-
-            nn.Conv2d(256, 128, kernel_size=3, stride=1),
-            nn.ReLU(inplace=True)
-        )
         self.fc = nn.Sequential(
             nn.Linear(self.fc_in_features, 256),
             nn.ReLU(inplace=True),
-            nn.Linear(256, 128),
-            # nn.ReLU(inplace=True),
-            # nn.Linear(128, 64),
+            nn.Linear(256, 128)
         )
 
         # initialize the weights
@@ -55,41 +34,17 @@ class SiameseModel(nn.Module):
 
     def forward_once(self, x):
         output = self.resnet(x)
-        # output = self.cnn1(x)
         output = output.view(output.size()[0], -1)
         output = self.fc(output)
         return output
 
-    # def forward(self, input1, input2):
-    #     # get two signals' features
-    #     output1 = self.forward_once(input1)
-    #     output2 = self.forward_once(input2)
-    #
-    #     return output1, output2
-
     def forward(self, input1, input2, input3):
-        # get two signals' features
+        # get 3 signals' features
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
         output3 = self.forward_once(input3)
 
         return output1, output2, output3
-
-    # def forward(self, input1, input2):
-    #     # get two signals' features
-    #     output1 = self.forward_once(input1)
-    #     output2 = self.forward_once(input2)
-    #
-    #     # concatenate both signals' features
-    #     output = torch.cat((output1, output2), 1) #???
-    #
-    #     # pass the concatenation to the linear layers
-    #     output = self.fc(output)
-    #
-    #     # pass the out of the linear layers to sigmoid layer
-    #     output = self.sigmoid(output)
-    #
-    #     return output
 
 
 

@@ -14,23 +14,18 @@ from torch.optim.lr_scheduler import StepLR
 
 def train(log_interval, model, device, train_loader, optimizer, epoch):
     model.train()
-
-    # criterion = nn.BCELoss()
-    # criterion = nn.CosineEmbeddingLoss(margin=0.0)
     criterion = nn.TripletMarginLoss()
 
-    for batch_idx, (images_1, images_2, images_3) in enumerate(train_loader):
-        images_1, images_2, images_3 = images_1.to(device), images_2.to(device), images_3.to(device)
+    for batch_idx, (mel_1, mel_2, mel_3) in enumerate(train_loader):
+        mel_1, mel_2, mel_3 = mel_1.to(device), mel_2.to(device), mel_3.to(device)
         optimizer.zero_grad()
-        # outputs = model(images_1, images_2).squeeze()
-        # output_1,output_2 = model(images_1, images_2)
-        output_1,output_2, output_3 = model(images_1, images_2, images_3)
+        output_1,output_2, output_3 = model(mel_1, mel_2, mel_3)
         loss = criterion(output_1,output_2, output_3)
         loss.backward()
         optimizer.step()
         if batch_idx % log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(images_1), len(train_loader.dataset),
+                epoch, batch_idx * len(mel_1), len(train_loader.dataset),
                        100. * batch_idx / len(train_loader), loss.item()))
 
 
@@ -39,38 +34,24 @@ def test(model, device, test_loader):
     test_loss = 0
     correct = 0
 
-    # criterion = nn.BCELoss()
-    # criterion = nn.CosineEmbeddingLoss(margin=0.0)
     criterion = nn.TripletMarginLoss()
 
     with torch.no_grad():
-        # for (images_1, images_2, targets) in test_loader:
-        for (images_1, images_2, images_3) in test_loader:
-            # images_1, images_2, targets = images_1.to(device), images_2.to(device), targets.to(device)
-            images_1, images_2, images_3 = images_1.to(device), images_2.to(device), images_3.to(device)
-            # outputs = model(images_1, images_2).squeeze()
-            # output_1, output_2 = model(images_1, images_2)
-            # loss = criterion(output_1, output_2, targets).item()
-            output_1, output_2, output_3 = model(images_1, images_2, images_3)
+        for (mel_1, mel_2, mel_3) in test_loader:
+            mel_1, mel_2, mel_3 = mel_1.to(device), mel_2.to(device), mel_3.to(device)
+            output_1, output_2, output_3 = model(mel_1, mel_2, mel_3)
             loss = criterion(output_1, output_2, output_3)
             test_loss += loss
-            # test_loss += criterion(outputs, targets.view_as(outputs)).sum().item()  # sum up batch loss
+
             dist_pos = F.cosine_similarity(output_1, output_2)
             dist_neg = F.cosine_similarity(output_1, output_3)
-            pred_pos = torch.where(dist_pos > 0.98, 1, 0)
-            targets_pos = torch.ones_like(pred_pos)
-            pred_neg = torch.where(dist_neg > 0.98, 1, 0)
-            targets_neg = torch.zeros_like(pred_neg)
-            pos_correct = pred_pos.eq(targets_pos.view_as(pred_pos)).sum().item()
-            neg_correct = pred_neg.eq(targets_neg.view_as(pred_neg)).sum().item()
-            correct += pos_correct
-            correct += neg_correct
 
-    # test_loss /= len(test_loader.dataset)
+            res = torch.gt(dist_pos, dist_neg).sum().item()
+            correct += res
 
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, 2* len(test_loader.dataset),
-        100. * correct / (len(test_loader.dataset)*2)))
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / (len(test_loader.dataset))))
 
     return test_loss
 
@@ -83,14 +64,11 @@ def train_model():
 
     train_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\train_annotations.csv"
     val_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\val_annotations.csv"
-    # test_csv_path = "C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources\\test_annotations.csv"
 
     train_dataset = EmotionDataset(train_csv_path, target_sample_rate=22000, max_len=22000*4)
     val_dataset = EmotionDataset(val_csv_path, target_sample_rate=22000, max_len=22000*4)
-    # test_dataset = EmotionDataset(test_csv_path, target_sample_rate=48000, max_len=48000*4)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=64, shuffle=True)
-    # test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=64, shuffle=False)
 
     model = SiameseModel().to(device)
     best_model = model
@@ -108,12 +86,6 @@ def train_model():
             best_model = copy.deepcopy(model)
 
     torch.save(best_model.state_dict(), "siamese_network.pt")
-
-    # model = SiameseModel().to(device)
-    # model.load_state_dict(torch.load("C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\src\\models\\siamese_network.pt"))
-    # model.eval()
-    # test_loss = test(model, device, test_loader)
-
 
 if __name__ == '__main__':
     train_model()

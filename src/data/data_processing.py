@@ -8,8 +8,7 @@ from sklearn.model_selection import train_test_split
 def run_eda(data_df):
     '''
     Runs a short EDA and plotting the distribution of the labels,
-     and a visualization of the text length
-    :param data_df: dataframe containing the data for classification
+     and a visualization of the audio length
     '''
 
     print("Shape of dataframe:", data_df.shape)
@@ -18,7 +17,6 @@ def run_eda(data_df):
     plt.title('Distribution of Labels')
     plt.show()
 
-    # Visualize the length of the texts
     plt.figure(figsize=(8, 6))
     sns.histplot(data=data_df, x='duration', hue='label', kde=True)
     plt.title('Distribution of audio length by labels')
@@ -48,17 +46,13 @@ def create_annotation_csv(rootdir):
 
     filenames_train, filenames_test, labels_train,\
         labels_test = train_test_split(filenames, labels, test_size=0.2, random_state=48)
-    # filenames_val, filenames_test, labels_val,\
-    #     labels_test = train_test_split(filenames_test, labels_test, test_size=0.5, random_state=48)
 
     train_data_dict = {'filename':filenames_train, 'label':labels_train}
-    # val_data_dict = {'filename':filenames_val, 'label':labels_val}
     test_data_dict = {'filename':filenames_test, 'label':labels_test}
     train_metadata_df = pd.DataFrame(train_data_dict)
-    # val_metadata_df = pd.DataFrame(val_data_dict)
     test_metadata_df = pd.DataFrame(test_data_dict)
     train_metadata_df.to_csv(os.path.join (rootdir, 'train_annotations.csv'), index=False)
-    # val_metadata_df.to_csv(os.path.join (rootdir, 'validation_annotations.csv'), index=False)
     test_metadata_df.to_csv(os.path.join (rootdir, 'val_annotations.csv'), index=False)
 
-create_annotation_csv(rootdir="C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources")
+if __name__ == '__main__':
+    create_annotation_csv(rootdir="C:\\Users\\shany\\PycharmProjects\\emotion_embedder\\resources")
