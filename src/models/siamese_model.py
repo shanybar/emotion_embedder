@@ -10,7 +10,7 @@ class SiameseModel(nn.Module):
 
         self.resnet = torchvision.models.resnet18(weights=ResNet18_Weights.DEFAULT)
 
-        # adjust to 1 channel input (not 2 channels like RGB)
+        # adjust to 1 channel input (not 3 channels - RGB)
         self.resnet.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         self.fc_in_features = self.resnet.fc.in_features
 

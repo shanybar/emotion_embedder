@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
+
 def run_eda(data_df):
     '''
     Runs a short EDA and plotting the distribution of the labels,
